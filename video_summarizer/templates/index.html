@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Intelligence Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="loader-overlay" class="loader-overlay hidden">
+        <div class="loader-spinner"></div>
+        <div id="loader-text" class="loader-text">Initializing...</div>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <h1>Video Intelligence</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="#">History</a>
+                <a href="#">Account</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero-section">
+                <h2>Unlock Insights from Any Video</h2>
+                <p>Generate summaries, transcripts, and key moments instantly. Powered by AI.</p>
+                <div class="input-container">
+                    <input type="url" id="videoUrl" placeholder="Paste a YouTube link...">
+                    <button id="analyzeBtn" onclick="processVideo()">Analyze</button>
+                </div>
+            </section>
+
+            <section id="results-section" class="results-container hidden">
+                
+                <div class="results-row">
+                    <div class="row-header">
+                        <h3 class="row-title">Executive Summary</h3>
+                        <div class="output-toggle">
+                            <span>Summary</span>
+                            <label class="switch">
+                                <input type="checkbox" id="output-type-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Notes</span>
+                        </div>
+                    </div>
+                    <div class="content-card-wrapper">
+                        <div id="summary-card" class="content-card summary-card"></div>
+                        <button class="copy-btn" data-target="summary-card">Copy</button>
+                    </div>
+                </div>
+
+                <div class="results-row">
+                    <h3 class="row-title">Key Moments</h3>
+                    <div id="moments-carousel" class="moments-carousel"></div>
+                </div>
+
+                <div class="results-row">
+                    <h3 class="row-title">Full Transcript</h3>
+                    <div class="content-card-wrapper">
+                         <div id="transcript-box" class="content-card transcript-box"></div>
+                         <button class="copy-btn" data-target="transcript-box">Copy</button>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Video Intelligence Suite. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Intelligence Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<style>
+/* 🎧 Enhanced TTS dropdown styling */
+.voice-select, .speed-select {
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    padding: 4px 10px;
+    background: #f0f8ff;  /* subtle blue background */
+    font-size: 0.85rem;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+.voice-select:hover, .speed-select:hover {
+    background: #e0f0ff;
+    transform: scale(1.05);
+}
+</style>
+</head>
+<body>
+<div id="loader-overlay" class="loader-overlay hidden">
+    <div class="loader-spinner"></div>
+    <div id="loader-text" class="loader-text">Initializing...</div>
+    <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
+</div>
+
+<div class="app-container">
+    <header class="app-header">
+        <div class="logo">
+            <h1>Video Intelligence</h1>
+        </div>
+        <nav class="main-nav">
+            <a href="#">History</a>
+            <a href="#">Account</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <h2>Unlock Insights from Any Video</h2>
+            <p>Generate summaries, transcripts, and key moments instantly. Powered by AI.</p>
+            <div class="input-container">
+                <input type="url" id="videoUrl" placeholder="Paste a YouTube link...">
+                <button id="analyzeBtn" onclick="processVideo()">Analyze</button>
+            </div>
+        </section>
+
+        <section id="results-section" class="results-container hidden">
+            <div class="results-row">
+                <div class="row-header">
+                    <h3 class="row-title">Executive Summary</h3>
+
+                    <!-- 🔊 TTS Controls -->
+                    <div class="tts-controls">
+                        <button id="tts-btn" class="tts-btn" title="Read Summary">🔊</button>
+                        <select id="speedSelect" class="speed-select">
+                            <option value="0.5">0.5×</option>
+                            <option value="1" selected>1×</option>
+                            <option value="1.5">1.5×</option>
+                            <option value="2">2×</option>
+                            <option value="2.5">2.5×</option>
+                        </select>
+                        <select id="voiceSelect" class="voice-select">
+                            <option value="">Default Voice</option>
+                        </select>
+                    </div>
+
+                    <div class="output-toggle">
+                        <span>Summary</span>
+                        <label class="switch">
+                            <input type="checkbox" id="output-type-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Notes</span>
+                    </div>
+                </div>
+
+                <div class="content-card-wrapper">
+                    <div id="summary-card" class="content-card summary-card">Your summary will appear here.</div>
+                    <button class="copy-btn" data-target="summary-card">Copy</button>
+                </div>
+            </div>
+
+            <div class="results-row">
+                <h3 class="row-title">Key Moments</h3>
+                <div id="moments-carousel" class="moments-carousel"></div>
+            </div>
+
+            <div class="results-row">
+                <h3 class="row-title">Full Transcript</h3>
+                <div class="content-card-wrapper">
+                     <div id="transcript-box" class="content-card transcript-box"></div>
+                     <button class="copy-btn" data-target="transcript-box">Copy</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 Video Intelligence Suite. All Rights Reserved.</p>
+    </footer>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+<!-- 🎧 Text-to-Speech Script -->
+<script>
+let utterance = null;
+let selectedSpeed = 1;
+let selectedVoice = null;
+
+function stopSpeech() {
+    if (utterance) {
+        window.speechSynthesis.cancel();
+        utterance = null;
+    }
+}
+
+function playTTS() {
+    const summaryEl = document.getElementById("summary-card");
+    const text = summaryEl.innerText.trim();
+    if (!text) return alert("No summary available!");
+
+    stopSpeech();
+
+    utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedVoice ? selectedVoice.lang : "en-US";
+    utterance.rate = selectedSpeed;
+    utterance.voice = selectedVoice || null;
+
+    const ttsBtn = document.getElementById("tts-btn");
+
+    // 🔊 Keep original speaker icon throughout
+    utterance.onstart = () => ttsBtn.textContent = "🔊";
+    utterance.onend = () => ttsBtn.textContent = "🔊";
+
+    window.speechSynthesis.speak(utterance);
+}
+
+// Dynamically update TTS speed or voice while playing
+function updateTTS() {
+    if (!utterance) return;
+    const currentText = utterance.text;
+    const wasSpeaking = window.speechSynthesis.speaking;
+
+    stopSpeech();
+    utterance = new SpeechSynthesisUtterance(currentText);
+    utterance.rate = selectedSpeed;
+    utterance.voice = selectedVoice || null;
+
+    const ttsBtn = document.getElementById("tts-btn");
+    utterance.onstart = () => ttsBtn.textContent = "🔊";
+    utterance.onend = () => ttsBtn.textContent = "🔊";
+
+    if (wasSpeaking) {
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const ttsBtn = document.getElementById("tts-btn");
+    const speedSelect = document.getElementById("speedSelect");
+    const voiceSelect = document.getElementById("voiceSelect");
+
+    function loadVoices() {
+        const voices = window.speechSynthesis.getVoices();
+        voiceSelect.innerHTML = "<option value=''>Default Voice</option>";
+        voices.forEach((voice, i) => {
+            if (voice.lang.startsWith("en")) {
+                const option = document.createElement("option");
+                option.value = i;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            }
+        });
+    }
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    ttsBtn.addEventListener("click", () => {
+        if (window.speechSynthesis.speaking) {
+            stopSpeech();
+            ttsBtn.textContent = "🔊";
+        } else {
+            playTTS();
+        }
+    });
+
+    speedSelect.addEventListener("change", () => {
+        selectedSpeed = parseFloat(speedSelect.value);
+        updateTTS();
+    });
+
+    voiceSelect.addEventListener("change", () => {
+        const voices = window.speechSynthesis.getVoices();
+        selectedVoice = voices[voiceSelect.value] || null;
+        updateTTS();
+    });
+});
+</script>
+</body>
+</html>
